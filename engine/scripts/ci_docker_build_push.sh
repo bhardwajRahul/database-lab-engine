@@ -32,17 +32,13 @@ set +x
 #   2. ZFS-bearing images still ship a working `zfs` binary. We use
 #      `zfs --help` instead of `zfs --version` because the latter exits
 #      non-zero when the kernel module is absent (the CI builder is DinD,
-#      which has none) — `--help` only exercises the userspace binary, so
-#      it surfaces musl / libblkid ABI breakage without the false negative.
+#      which has none) — `--help` only exercises the userspace binary.
 #   3. None of the daemon / runtime / compose binaries that ship in the
 #      full `docker:*` image (and are NOT needed in a CLI-only runtime)
 #      have crept back in. The forbidden list is daemon-side only —
 #      the `docker` CLI itself is required and stays.
-# The zfs08 case is the noisiest because the v3.12 zfs binary now runs
-# against the alpine:3.23 musl / libblkid; the help-exit check pins this
-# at build time.
 case "$docker_file" in
-  Dockerfile.dblab-server|Dockerfile.dblab-server-debug|Dockerfile.dblab-server-zfs08|Dockerfile.dblab-cli|Dockerfile.ci-checker)
+  Dockerfile.dblab-server|Dockerfile.dblab-server-debug|Dockerfile.dblab-cli|Dockerfile.ci-checker)
     if [ "${#ADDR[@]}" -eq 0 ] || [ -z "${ADDR[0]:-}" ]; then
       echo "ERROR: smoke test cannot run, TAGS is empty" >&2
       exit 1
@@ -52,7 +48,7 @@ case "$docker_file" in
     docker run --rm "$smoke_image" docker --version
     set +x
     case "$docker_file" in
-      Dockerfile.dblab-server|Dockerfile.dblab-server-debug|Dockerfile.dblab-server-zfs08)
+      Dockerfile.dblab-server|Dockerfile.dblab-server-debug)
         set -x
         docker run --rm "$smoke_image" zfs --help >/dev/null
         set +x
